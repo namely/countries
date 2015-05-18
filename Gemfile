@@ -1,7 +1,7 @@
-source :rubygems
+source 'https://rubygems.org'
+gem "rake"
 
-gem 'jeweler', '=1.4.0'
-gem 'rspec', '=1.3.1'
+# Specify your gem's dependencies in countries.gemspec
+gemspec
 
-gem 'currencies', '=0.4.0', :require => 'iso4217'
-gem 'yard', '=0.6.4'
+gem "currencies", :git => "git://github.com/dwilkie/currencies.git"

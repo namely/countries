@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe ISO3166::Country do
@@ -32,12 +34,32 @@ describe ISO3166::Country do
     country.longitude.should == '97 00 W'
   end
 
+  it "should return continent" do
+    country.continent.should == "North America"
+  end
+
   it 'should return region' do
     country.region.should == 'Americas'
   end
 
   it 'should return subregion' do
     country.subregion.should == 'Northern America'
+  end
+
+  it 'should return ioc code' do
+    country.ioc.should == 'USA'
+  end
+
+  it 'should return UN/LOCODE' do
+    country.un_locode.should == 'US'
+  end
+
+  it 'should be identical to itself' do
+    country.should == ISO3166::Country.search('US')
+  end
+
+  it 'should return language' do
+    country.languages[0].should == 'en'
   end
 
   describe 'e164' do
@@ -76,9 +98,66 @@ describe ISO3166::Country do
     end
   end
 
+  describe 'valid?' do
+    it 'should return true if country is valid' do
+      ISO3166::Country.new('US').should be_valid
+    end
+
+    it 'should return false if country is invalid' do
+      ISO3166::Country.new('fubar').should_not be_valid
+    end
+  end
+
+  describe 'all' do
+    context 'without a block' do
+      let(:countries) { ISO3166::Country.all }
+
+      it 'should return an arry list of all countries' do
+        countries.should be_an(Array)
+        countries.first.should be_an(Array)
+        countries.first.should have(2).fields
+        countries.should have(247).countries
+      end
+
+      it 'alphabetizes the countries by the name' do
+        countries[0][0].should  == "Afghanistan"
+        countries[1][0].should  == "Albania"
+      end
+    end
+
+    context 'with a block passed in' do
+      let(:countries) { ISO3166::Country.all { |country, data| [data['name'], country, data['country_code'] ] } }
+
+      it 'returns the mapping of that block over the countries data' do
+        countries.should be_an(Array)
+        countries.first.should be_an(Array)
+        countries.first.should have(3).fields
+        countries.should have(247).countries
+      end
+    end
+  end
+
+  describe 'countries' do
+    it 'should be the same as all' do
+      ISO3166::Country.countries.should == ISO3166::Country.all
+    end
+  end
+
   describe 'search' do
-    it 'should return new country object when a valid alpha2 is passed' do
+    it 'should return new country object when a valid alpha2 string is passed' do
       ISO3166::Country.search('US').should be_a(ISO3166::Country)
+    end
+
+    it 'should return false when an invalid alpha2 string is passed' do
+      ISO3166::Country.search('fubar').should be_false
+    end
+
+    it 'should return new country object when a valid alpha2 symbol is passed' do
+      ISO3166::Country.search(:us).should be_a(ISO3166::Country)
+    end
+
+    it 'should return false when an invalid alpha2 symbol is passed' do
+      ISO3166::Country.search(:fubar).should be_false
     end
   end
 
@@ -116,9 +195,59 @@ describe ISO3166::Country do
     end
   end
 
-  describe ".find_by_name" do
+  describe 'find_all_by' do
+    context "when searchead attribute equals the given value" do
+      let(:spain_data) { ISO3166::Country.find_all_by('alpha2', "ES") }
+
+      it "returns a hash with the data of the country" do
+        spain_data.should be_a Hash
+        spain_data.should have(1).keys
+      end
+    end
+
+    context "when searchead attribute is list and one of its elements equals the given value" do
+      let(:spain_data) { ISO3166::Country.find_all_by('languages', "en") }
+
+      it "returns a hash with the data of the country" do
+        spain_data.should be_a Hash
+        spain_data.size.should > 1
+      end
+    end
+
+    it "also finds results if the given values is not upcased/downcased properly" do
+      spain_data = ISO3166::Country.find_all_by('alpha2', "es")
+      spain_data.should be_a Hash
+      spain_data.should have(1).keys
+    end
+
+    it "also finds results if the attribute is given as a symbol" do
+      spain_data = ISO3166::Country.find_all_by(:alpha2, "ES")
+      spain_data.should be_a Hash
+      spain_data.should have(1).keys
+    end
+
+    it "casts the given value to a string to perform the search" do
+      spain_data = ISO3166::Country.find_all_by(:country_code, 34)
+      spain_data.should be_a Hash
+      spain_data.keys.should == ['ES']
+    end
+
+    it "also performs searches with regexps and forces it to ignore case" do
+      spain_data = ISO3166::Country.find_all_by(:names, /Españ/)
+      spain_data.should be_a Hash
+      spain_data.keys.should == ['ES']
+    end
+  end
+
+  describe "hash finder methods" do
     context "when search name in 'name'" do
       subject { ISO3166::Country.find_by_name("Poland") }
+
+      its(:first) { should == "PL" }
+    end
+
+    context "when search lowercase name in 'name'" do
+      subject { ISO3166::Country.find_by_name("poland") }
 
       its(:first) { should == "PL" }
     end
@@ -127,6 +256,80 @@ describe ISO3166::Country do
       subject { ISO3166::Country.find_by_name("Polonia") }
 
       its(:first) { should == "PL" }
+    end
+
+    context "when finding by invalid attribute" do
+      it "should raise an error" do
+        lambda { ISO3166::Country.find_by_invalid('invalid') }.should raise_error
+      end
+    end
+
+    context "when using find_all method" do
+      let(:list) { ISO3166::Country.find_all_by_currency('USD') }
+
+      it "should be an Array of Arrays" do
+        list.should be_a(Array)
+        list.first.should be_a(Array)
+      end
+    end
+
+    context "when using find_by method" do
+      subject { ISO3166::Country.find_by_alpha3('CAN') }
+
+      its(:length) { should == 2 }
+      its(:first) { should be_a(String) }
+      its(:last) { should be_a(Hash) }
+    end
+  end
+
+  describe "country finder methods" do
+    context "when search name found" do
+      let(:uk) { ISO3166::Country.find_country_by_name("United Kingdom") }
+
+      it "should be a country instance" do
+        uk.should be_a(ISO3166::Country)
+        uk.alpha2.should == "GB"
+      end
+    end
+
+    context "when search lowercase name found" do
+      let(:uk) { ISO3166::Country.find_country_by_name("united kingdom") }
+
+      it "should be a country instance" do
+        uk.should be_a(ISO3166::Country)
+        uk.alpha2.should == "GB"
+      end
+    end
+
+    context "when search name not found" do
+      let(:bogus) { ISO3166::Country.find_country_by_name("Does not exist") }
+
+      it "should be a country instance" do
+        bogus.should == nil
+      end
+    end
+
+    context "when finding by invalid attribute" do
+      it "should raise an error" do
+        lambda { ISO3166::Country.find_country_by_invalid('invalid') }.should raise_error
+      end
+    end
+
+    context "when using find_all method" do
+      let(:list) { ISO3166::Country.find_all_countries_by_currency('USD') }
+
+      it "should be an Array of Country objects" do
+        list.should be_a(Array)
+        list.first.should be_a(ISO3166::Country)
+      end
+    end
+
+    context "when using find_by method" do
+      let(:country) { ISO3166::Country.find_country_by_alpha3('CAN') }
+
+      it 'should be a single country object' do
+        country.should be_a(ISO3166::Country)
+      end
     end
   end
 
@@ -140,4 +343,19 @@ describe ISO3166::Country do
     end
   end
 
+  describe 'Norway' do
+    let(:norway) { ISO3166::Country.search('NO') }
+
+    it 'should have a currency' do
+      norway.currency.should be_a(ISO4217::Currency)
+    end
+  end
+
+  describe 'Languages' do
+    let(:german_speaking_countries) { ISO3166::Country.find_all_countries_by_languages('de') }
+
+    it "should find countries by language" do
+      german_speaking_countries.size.should == 6
+    end
+  end
 end
