@@ -20,6 +20,25 @@ Or you can install via bundler Gemfile with using only ISO3166::Country (no Coun
 
     gem 'countries', :require => 'iso3166'
 
+Golang Installation, Lint and Test
+------------
+Download dependencies
+
+    go mod vendor
+
+Lint
+    
+    golangci-lint run --skip-dirs=vendor --skip-dirs=gen --skip-dirs=mocks --deadline=5m --tests=true -E revive \
+    -E gosec -E unconvert -E goconst -E gocyclo -E goimports
+
+Test
+
+    go test ./...
+
+Import package from your repo
+
+    import github.com/namely/countries
+
 Country Select Helper
 ---------------------
 
