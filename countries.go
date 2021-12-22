@@ -1,4 +1,4 @@
-package main
+package countries
 
 import (
 	"fmt"
@@ -7,10 +7,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
-
-func main() {
-
-}
 
 // GetCountry returns the country data
 func GetCountry(countryCode string) interface{} {
