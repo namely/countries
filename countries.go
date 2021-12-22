@@ -8,9 +8,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func main() {
+
+}
+
 // GetCountry returns the country data
 func GetCountry(countryCode string) interface{} {
-	path := fmt.Sprintf("lib/data/countries.yaml")
+	path := "lib/data/countries.yaml"
 	yfile, err := ioutil.ReadFile(path)
 	if err != nil {
 		return false
