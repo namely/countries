@@ -1,17 +1,20 @@
 package countries
 
 import (
+	"embed"
 	"fmt"
-	"io/ioutil"
 	"sort"
 
 	"gopkg.in/yaml.v3"
 )
 
+//go:embed lib/data/*
+var content embed.FS
+
 // GetCountry returns the country data
 func GetCountry(countryCode string) interface{} {
 	path := "lib/data/countries.yaml"
-	yfile, err := ioutil.ReadFile(path)
+	yfile, err := content.ReadFile(path)
 	if err != nil {
 		return false
 	}
@@ -29,7 +32,7 @@ func GetCountry(countryCode string) interface{} {
 // HasSubdivisions returns true or false for a country
 func HasSubdivisions(countryCode string) bool {
 	path := fmt.Sprintf("lib/data/subdivisions/%s.yaml", countryCode)
-	yfile, err := ioutil.ReadFile(path)
+	yfile, err := content.ReadFile(path)
 	if err != nil {
 		return false
 	}
@@ -43,7 +46,7 @@ func HasSubdivisions(countryCode string) bool {
 // GetSubdivisionsName gets subdivisions name property for a specific country
 func GetSubdivisionsName(countryCode string) []string {
 	path := fmt.Sprintf("lib/data/subdivisions/%s.yaml", countryCode)
-	yfile, err := ioutil.ReadFile(path)
+	yfile, err := content.ReadFile(path)
 	if err != nil {
 		return nil
 	}
