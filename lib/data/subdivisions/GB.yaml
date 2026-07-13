@@ -633,6 +633,9 @@ STT:
 STY:
   name: "South Tyneside"
   names: "South Tyneside"
+SYK:
+  name: "South Yorkshire"
+  names: "South Yorkshire"
 SWA:
   name: "Swansea [Abertawe GB-ATA]"
   names:
